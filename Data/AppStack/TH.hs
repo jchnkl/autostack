@@ -1,10 +1,14 @@
 {-# LANGUAGE LambdaCase      #-}
 {-# LANGUAGE TemplateHaskell #-}
 
-module Data.AppStack.TH where
+module Data.AppStack.TH
+    ( module Data.AppStack.TH
+    , bracket
+    ) where
 
 import Data.Maybe (fromMaybe)
 import Language.Haskell.TH
+import Control.Monad.Catch (bracket)
 
 {-
 tupleTypes :: Name -> Q (Int, [Type])
