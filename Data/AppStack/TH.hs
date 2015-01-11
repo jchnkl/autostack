@@ -3,7 +3,7 @@
 
 module Data.AppStack.TH where
 
-import Data.Maybe
+import Data.Maybe (fromMaybe)
 import Language.Haskell.TH
 
 {-
