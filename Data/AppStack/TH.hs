@@ -111,10 +111,15 @@ mkSequenceTupleN n
     | otherwise = return $ [mkSequenceTupleSig n, mkSequenceTupleFun n]
 -}
 
--- | allocators = (myAllocator_1, myAllocator_2, ..)
--- | putStrLn $( stringE . show =<< ppr <$> mkRunAllocators [| allocators  |] )
-mkRunAllocators :: ExpQ -> Q [Dec]
-mkRunAllocators expq = runQ expq >>= \case
+{-|
+ - The 'mkRunComponents' function build the 'runComponents' function.
+ - 'runComponents' can be called with a tuple of 'Component's as argument
+ - For pretty printing the output use
+ - 'components = (Component .., Component .., ..)'
+ - 'putStrLn $( stringE . show =<< ppr <$> mkRunComponents [| components  |] )'
+ -}
+mkRunComponents :: ExpQ -> Q [Dec]
+mkRunComponents expq = runQ expq >>= \case
     VarE name -> reify name >>= fromInfo
     TupE tups -> return [mkFun $ length tups]
     _         -> printError
@@ -138,10 +143,10 @@ mkRunAllocators expq = runQ expq >>= \case
     appFN           = mkName "$"
     flipFN          = mkName "flip"
     bracketN        = mkName "bracket"
-    allocCtorN      = mkName "Allocator"
+    allocCtorN      = mkName "Component"
     nthN v n        = mkName $ v ++ show n
 
-    -- (Allocator a1 r1 rr1, Allocator a2 r2 rr2, ..)
+    -- (Component a1 r1 rr1, Component a2 r2 rr2, ..)
     allocVarPs n    = [VarP (nthN "a" n), VarP (nthN "r" n), VarP (nthN "rr" n)]
     allocCtor n     = ConP allocCtorN (allocVarPs n)
 
@@ -159,18 +164,19 @@ mkRunAllocators expq = runQ expq >>= \case
     runF 0          = VarE fargN
     runF n          = UInfixE (runPF n) (VarE appFN) (runF (n-1))
 
-    -- runAllocators (Allocator ..) f = do
-    funN            = mkName "runAllocators"
+    -- runComponents (Component ..) f = do
+    funN            = mkName "runComponents"
     funPat n        = TupP $ [allocCtor n' | n' <- [1..n]]
     funBody n       = NormalB (DoE [NoBindS $ mkBracketE n 1])
     funClause n     = Clause [funPat n, VarP fargN] (funBody n) []
     mkFun n         = FunD funN [funClause n]
 
-
-
 type ClassName = String
+
 type TransName = String
+
 type MethodName = String
+
 type FunctionName = String
 
 mkTransClass :: (FunctionName -> MethodName)
