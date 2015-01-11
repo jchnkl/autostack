@@ -6,6 +6,7 @@ module Data.AppStack.TH where
 import Data.Maybe
 import Language.Haskell.TH
 
+{-
 tupleTypes :: Name -> Q (Int, [Type])
 tupleTypes name = do
     reify name >>= \case
@@ -17,7 +18,9 @@ tupleTypes name = do
     types n conts (AppT (TupleT _) cont) = (n, cont : conts)
     types n conts (AppT appt       cont) = types (n+1) (cont : conts) appt
     types _ _     typeT                  = error (show typeT ++ " not handled")
+-}
 
+{-
 mkInstances :: Name -> Name -> Q [Dec]
 mkInstances name = fmap (uncurry mk) . tupleTypes
     where
@@ -33,7 +36,9 @@ mkInstances name = fmap (uncurry mk) . tupleTypes
     vars n = ("a" ++ show n) : vars (n-1)
 
     body n = NormalB (VarE (mkName $ "a" ++ show n))
+-}
 
+{-
 mkMapTupleFun :: Int -> Dec
 mkMapTupleFun c = FunD id_ [Clause ([in_] ++ fun) (NormalB out) []]
     where
@@ -63,7 +68,9 @@ mkMapTupleN :: Int -> Q [Dec]
 mkMapTupleN n
     | n <= 0    = error "mapTuple0 not supported"
     | otherwise = return $ [mkMapTupleSig n, mkMapTupleFun n]
+-}
 
+{-
 mkSequenceTupleFun :: Int -> Dec
 mkSequenceTupleFun c = FunD id_ [Clause [in_] (NormalB out) []]
     where
@@ -102,6 +109,7 @@ mkSequenceTupleN :: Int -> Q [Dec]
 mkSequenceTupleN n
     | n <= 0    = error "sequenceTuple0 not supported"
     | otherwise = return $ [mkSequenceTupleSig n, mkSequenceTupleFun n]
+-}
 
 -- | allocators = (myAllocator_1, myAllocator_2, ..)
 -- | putStrLn $( stringE . show =<< ppr <$> mkRunAllocators [| allocators  |] )
