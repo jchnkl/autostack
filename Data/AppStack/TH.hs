@@ -7,7 +7,6 @@
  @FlexibleContexts, FlexibleInstances, TemplateHaskell, UndecidableInstances, OverlappingInstances@
  -}
 
-
 module Data.AppStack.TH
     ( module Data.AppStack.TH
     , bracket
@@ -16,111 +15,6 @@ module Data.AppStack.TH
 import Data.Maybe (fromMaybe)
 import Language.Haskell.TH
 import Control.Monad.Catch (bracket)
-
-{-
-tupleTypes :: Name -> Q (Int, [Type])
-tupleTypes name = do
-    reify name >>= \case
-        TyConI (TySynD _ _ appt) -> return $ types 1 [] appt
-        info -> error (show info ++ " not handled")
-
-    where
-    types :: Int -> [Type] -> Type -> (Int, [Type])
-    types n conts (AppT (TupleT _) cont) = (n, cont : conts)
-    types n conts (AppT appt       cont) = types (n+1) (cont : conts) appt
-    types _ _     typeT                  = error (show typeT ++ " not handled")
--}
-
-{-
-mkInstances :: Name -> Name -> Q [Dec]
-mkInstances name = fmap (uncurry mk) . tupleTypes
-    where
-    mk n ts = mk' n (1::Int) ts
-    mk' _ _ []     = []
-    mk' n n' (t:ts) = InstanceD [] (AppT (ConT name) t) [fun n n'] : mk' n (n'+1) ts
-
-    fun n n' = FunD (mkName "getResource") [Clause [args n] (body n') []]
-
-    args n = TupP . reverse . map (VarP . mkName) $ vars n
-
-    vars 0 = []
-    vars n = ("a" ++ show n) : vars (n-1)
-
-    body n = NormalB (VarE (mkName $ "a" ++ show n))
--}
-
-{-
-mkMapTupleFun :: Int -> Dec
-mkMapTupleFun c = FunD id_ [Clause ([in_] ++ fun) (NormalB out) []]
-    where
-    nthVar a n = mkName $ a ++ show n
-    id_ = mkName $ "mapTuple" ++ show c
-    in_ = TupP [VarP (nthVar "i" n) | n <- [1..c]]
-    fun = [VarP (nthVar "f" n) | n <- [1..c]]
-    out = TupE [AppE (VarE $ nthVar "f" n) (VarE $ nthVar "i" n) | n <- [1..c]]
-
-mkMapTupleSig :: Int -> Dec
-mkMapTupleSig c = sig
-    where
-    i n = mkName $ "i" ++ show n
-    o n = mkName $ "o" ++ show n
-    id_ = mkName $ "mapTuple" ++ show c
-    sig = SigD id_ (ForallT tyvars [] $ AppT (AppT ArrowT (tup i c)) (typ 1))
-    tyvars = [PlainTV (i n) | n <- [1..c]] ++ [PlainTV (o n) | n <- [1..c]]
-    fun n = AppT (AppT ArrowT (VarT $ i n)) (VarT $ o n)
-    tup v 1 = AppT (TupleT c)    (VarT $ v (1::Int))
-    tup v n = AppT (tup v (n-1)) (VarT $ v n)
-    typ n
-        | n == c    = AppT (AppT ArrowT (fun n)) (tup o c)
-        | otherwise = AppT (AppT ArrowT (fun n)) (typ (n+1))
-
--- mapTuple3 :: (a1, a2, a3) -> (a1 -> b1) -> (a2 -> b2) -> (a3 -> b3) -> (b1, b2, b3)
-mkMapTupleN :: Int -> Q [Dec]
-mkMapTupleN n
-    | n <= 0    = error "mapTuple0 not supported"
-    | otherwise = return $ [mkMapTupleSig n, mkMapTupleFun n]
--}
-
-{-
-mkSequenceTupleFun :: Int -> Dec
-mkSequenceTupleFun c = FunD id_ [Clause [in_] (NormalB out) []]
-    where
-    nthVar a n = mkName $ a ++ show n
-    id_ = mkName $ "sequenceTuple" ++ show c
-    returnE = VarE (mkName "return")
-    in_ = TupP [VarP (nthVar "ma" n) | n <- [1..c]]
-    out = DoE $ binds ++ [nobinds]
-    binds = [BindS (VarP $ nthVar "a" n) (VarE $ nthVar "ma" n) | n <- [1..c]]
-    nobinds = NoBindS (AppE returnE tup)
-    tup = TupE [VarE $ nthVar "a" n | n <- [1..c]]
-
--- sequenceTuple3 :: Monad m => (m t, m t1, m t2) -> m (t, t1, t2)
-mkSequenceTupleSig :: Int -> Dec
-mkSequenceTupleSig c = sig
-    where
-
-    m = mkName "m"
-    a n = mkName $ "a" ++ show n
-    at n = VarT $ mkName $ "a" ++ show n
-    mat n = AppT (VarT m) (at n)
-    -- o n = mkName $ "o" ++ show n
-
-    id_ = mkName $ "sequenceTuple" ++ show c
-
-    sig = SigD id_ (ForallT tyvars ctxt fun)
-    ctxt = [ClassP (mkName "Monad") [VarT m]]
-    tyvars = PlainTV m : [PlainTV (a n) | n <- [1..c]]
-
-    fun = AppT (AppT ArrowT (tup mat c)) (AppT (VarT m) (tup at c))
-
-    tup v 1 = AppT (TupleT c)    (v (1::Int))
-    tup v n = AppT (tup v (n-1)) (v n)
-
-mkSequenceTupleN :: Int -> Q [Dec]
-mkSequenceTupleN n
-    | n <= 0    = error "sequenceTuple0 not supported"
-    | otherwise = return $ [mkSequenceTupleSig n, mkSequenceTupleFun n]
--}
 
 {-|
    The 'mkRunComponents' function builds the 'runComponents' function.
