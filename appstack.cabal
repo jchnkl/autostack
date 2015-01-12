@@ -3,8 +3,8 @@
 
 name:                appstack
 version:             0.1.0.0
--- synopsis:            
--- description:         
+synopsis:            Generate Transformer stacks and Interfaces at compile time
+-- description:
 license:             BSD2
 license-file:        LICENSE
 author:              Jochen Keil
