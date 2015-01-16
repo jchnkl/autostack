@@ -6,14 +6,14 @@
 {-# LANGUAGE UndecidableInstances       #-}
 {-# LANGUAGE OverlappingInstances       #-}
 
-module Data.AppStack.Example where
+module Data.AutoStack.Example where
 
 import Control.Applicative
 import Control.Monad.Reader
 import Control.Monad.State
 import Data.Typeable
-import Data.AppStack
-import Data.AppStack.TH
+import Data.AutoStack
+import Data.AutoStack.TH
 
 newtype FooT m a = FooT { unFooT :: ReaderT Int m a }
     deriving (Applicative, Functor, Monad, MonadIO, MonadTrans, Typeable)

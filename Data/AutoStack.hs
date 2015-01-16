@@ -2,7 +2,7 @@
 {-# LANGUAGE ExistentialQuantification #-}
 {-# LANGUAGE RankNTypes                #-}
 
-module Data.AppStack where
+module Data.AutoStack where
 
 import Control.Monad.IO.Class (MonadIO)
 import Data.Typeable (Typeable)

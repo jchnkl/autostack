@@ -7,8 +7,8 @@
  @FlexibleContexts, FlexibleInstances, TemplateHaskell, UndecidableInstances, OverlappingInstances@
  -}
 
-module Data.AppStack.TH
-    ( module Data.AppStack.TH
+module Data.AutoStack.TH
+    ( module Data.AutoStack.TH
     , bracket
     ) where
 
