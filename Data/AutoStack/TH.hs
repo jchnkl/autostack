@@ -12,9 +12,12 @@ module Data.AutoStack.TH
     , bracket
     ) where
 
+import Control.Monad.Catch (bracket)
 import Data.Maybe (fromMaybe)
 import Language.Haskell.TH
-import Control.Monad.Catch (bracket)
+
+showLoc :: Loc -> String
+showLoc loc = "<" ++ loc_filename loc ++ ">:" ++ show (loc_start loc)
 
 {-|
    The 'mkRunComponents' function builds the 'runComponents' function.
@@ -23,14 +26,11 @@ import Control.Monad.Catch (bracket)
    @putStrLn $( stringE . show =\<\< ppr \<$> mkRunComponents [| components  |] )@
    where @components = (Component .., Component .., ..)@
  -}
-mkRunComponents :: ExpQ -> Q [Dec]
-mkRunComponents expq = runQ expq >>= \case
-    VarE name -> reify name >>= fromInfo
-    TupE tups -> return [mkFun $ length tups]
-    _         -> printError
 
+mkRunComponents :: Name -> Q [Dec]
+mkRunComponents name = reify name >>= fromInfo
     where
-    printError                = expq >>= error . ("invalid expression: " ++) . show
+    printError                = location >>= error . showLoc
 
     fromInfo (VarI _ typ _ _) = tupLength typ >>= \n -> return [mkFun n]
     fromInfo                _ = printError
