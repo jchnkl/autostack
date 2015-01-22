@@ -14,6 +14,7 @@ import Control.Monad.State
 import Data.Typeable
 import Data.AutoStack
 import Data.AutoStack.TH
+import Data.AutoStack.Example.Util
 
 newtype FooT m a = FooT { unFooT :: ReaderT Int m a }
     deriving (Applicative, Functor, Monad, MonadIO, MonadTrans, Typeable)
@@ -28,8 +29,9 @@ fooComponent = Component
 getFooT :: Monad m => FooT m Int
 getFooT = FooT ask
 
-$( mkTransClass (\s -> take (length s - 1) s) "MonadFoo" "FooT" ["getFooT"] )
-$( mkTransInstances (\s -> take (length s - 1) s) "MonadFoo" "FooT" ["getFooT"] )
+-- generate class and instances for `FooT`
+mkTransClass dropLast "MonadFoo" "FooT" ["getFooT"]
+mkTransInstances dropLast "MonadFoo" "FooT" ["getFooT"]
 
 newtype BarT m a = BarT { unBarT :: StateT String m a }
     deriving (Applicative, Functor, Monad, MonadIO, MonadTrans, Typeable)
@@ -50,8 +52,9 @@ setBarT = BarT . put
 modifyBarT :: Monad m => (String -> String) -> BarT m ()
 modifyBarT = BarT . modify
 
-$( mkTransClass (\s -> take (length s - 1) s) "MonadBar" "BarT" ["getBarT", "setBarT", "modifyBarT"] )
-$( mkTransInstances (\s -> take (length s - 1) s) "MonadBar" "BarT" ["getBarT", "setBarT", "modifyBarT"] )
+-- generate class and instances for `BarT`
+mkTransClass dropLast "MonadBar" "BarT" ["getBarT", "setBarT", "modifyBarT"]
+mkTransInstances dropLast "MonadBar" "BarT" ["getBarT", "setBarT", "modifyBarT"]
 
 newtype FooBarT m a = FooBarT { unFooBarT :: ReaderT String (StateT Int m) a }
     deriving (Applicative, Functor, Monad, MonadIO, Typeable)
@@ -72,8 +75,15 @@ getFooBarStringT = FooBarT ask
 raiseFooBarT :: Monad m => FooBarT m ()
 raiseFooBarT = FooBarT $ lift $ modify (+1)
 
-$( mkTransClass (\s -> take (length s - 1) s) "MonadFooBar" "FooBarT" ["getFooBarStringT", "raiseFooBarT"] )
-$( mkTransInstances (\s -> take (length s - 1) s) "MonadFooBar" "FooBarT" ["getFooBarStringT", "raiseFooBarT"] )
+-- generate class and instances for `FooBarT`
+mkTransClass dropLast "MonadFooBar" "FooBarT" ["getFooBarStringT", "raiseFooBarT"]
+mkTransInstances dropLast "MonadFooBar" "FooBarT" ["getFooBarStringT", "raiseFooBarT"]
+
+components :: (Component FooT, Component BarT, Component FooBarT)
+components = (fooComponent, barComponent, fooBarComponent)
+
+-- generate `runWithComponents` function
+mkRunWithComponents 'components
 
 example :: (MonadFoo m, MonadBar m, MonadFooBar m) => m ()
 example = do
@@ -82,10 +92,5 @@ example = do
     getFooBarString >>= setBar . show
     modifyBar (++ "foo")
 
-components :: (Component FooT, Component BarT, Component FooBarT)
-components = (fooComponent, barComponent, fooBarComponent)
-
-$(mkRunComponents [| (fooComponent, barComponent, fooBarComponent) |])
-
 main :: IO ()
-main = runComponents components example
+main = runWithComponents example
