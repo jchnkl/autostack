@@ -26,7 +26,6 @@ showLoc loc = "<" ++ loc_filename loc ++ ">:" ++ show (loc_start loc)
    @putStrLn $( stringE . show =\<\< ppr \<$> mkRunComponents [| components  |] )@
    where @components = (Component .., Component .., ..)@
  -}
-
 mkRunComponents :: Name -> Q [Dec]
 mkRunComponents name = reify name >>= fromInfo
     where
@@ -75,6 +74,20 @@ mkRunComponents name = reify name >>= fromInfo
     funBody n       = NormalB (DoE [NoBindS $ mkBracketE n 1])
     funClause n     = Clause [funPat n, VarP fargN] (funBody n) []
     mkFun n         = FunD funN [funClause n]
+
+{-|
+   Constructs a function called 'runWithComponents'.
+   Similar to the 'mkRunComponents' function, but the 'Component's are already
+   partially applied to the resulting function
+ -}
+mkRunWithComponents :: Name -> Q [Dec]
+mkRunWithComponents name = sequence [funD (mkName "runWithComponents") [clse]]
+    where
+    funArgN = mkName "f'"
+    runFunN = varE $ mkName "runComponents"
+    body = normalB $ appE (appE runFunN $ varE name) (varE funArgN)
+    clse = mkRunComponents name >>= \ds -> do
+        clause [varP funArgN] body (map return ds)
 
 type ClassName = String
 
